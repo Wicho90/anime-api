@@ -1,0 +1,11 @@
+*.exe
+
+go.work
+
+
+go.work
+
+
+.vscode/
+.idea/
+public/*
