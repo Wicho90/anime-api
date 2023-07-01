@@ -23,6 +23,9 @@ const (
 	queryGetAll  = "SELECT id, name, number, slug, image_url FROM seasons"
 	queryGetById = "SELECT id, name, number, slug, image_url FROM seasons WHERE id = $1"
 	queryCreate  = "INSERT INTO seasons (name, number, slug, image_url) VALUES ($1, $2, $3, $4) RETURNING id"
+	queryUpdate  = "UPDATE seasons SET name = $1, number = $2, slug = $3, image_url = $4 WHERE id = $5"
+
+	queryDeleteById = "DELETE FROM seasons WHERE id = $1"
 )
 
 func (r *repository) GetAll() ([]*entities.Season, error) {
@@ -53,6 +56,7 @@ func (r *repository) GetAll() ([]*entities.Season, error) {
 
 	return seasons, nil
 }
+
 func (r *repository) GetById(id uint64) (*entities.Season, error) {
 	season := &entities.Season{}
 
@@ -85,11 +89,11 @@ func (r *repository) Create(season *entities.Season) error {
 			case "23502": // no nulos
 				return &ex.ErrValidation{
 					Field:  pgErr.Column,
-					Reason: "no puede estar vacío",
+					Reason: "the field cannot be empty",
 				}
 			default:
-				log.Printf("Error de restricción en la actualización: %s", err)
-				return fmt.Errorf("error en la creación: %w", err)
+				log.Printf("Failed creation: %s", err)
+				return fmt.Errorf("failed creation: %w", err)
 			}
 		}
 
@@ -99,12 +103,57 @@ func (r *repository) Create(season *entities.Season) error {
 	return nil
 }
 
-func (r *repository) Update(id uint64, season entities.Season) (entities.Season, error) {
-	//TODO implement me
-	panic("implement me")
+func (r *repository) Update(season *entities.Season) error {
+	result, err := r.db.Exec(queryUpdate, season.Name, season.Number, season.Slug, season.ImageUrl, season.ID)
+
+	if err != nil {
+
+		if pgErr, ok := err.(*pq.Error); ok {
+
+			switch pgErr.Code {
+			case "23505":
+				return &ex.ErrAlreadyExists{
+					Field:      pgErr.Column,
+					Constraint: pgErr.Constraint,
+				}
+			case "23502":
+				return &ex.ErrValidation{
+					Field:  pgErr.Column,
+					Reason: "the field cannot be empty",
+				}
+			default:
+				log.Printf("Update failed: %s", err)
+				return fmt.Errorf("update failed: %w", err)
+			}
+		}
+		log.Printf("Unknown update error: %s", err)
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ex.ErrNotFound
+	}
+
+	return nil
 }
 
 func (r *repository) Delete(id uint64) error {
-	//TODO implement me
-	panic("implement me")
+	result, err := r.db.Exec(queryDeleteById, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ex.ErrNotFound
+	}
+
+	return nil
 }

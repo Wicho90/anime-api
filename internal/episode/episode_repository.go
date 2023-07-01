@@ -84,6 +84,7 @@ func (r *repository) GetLatest() ([]*entities.EpisodeWithImage, error) {
 
 	return episodes, nil
 }
+
 func (r *repository) GetByID(id uint64) (*entities.Episode, error) {
 	episode := &entities.Episode{}
 
@@ -99,6 +100,7 @@ func (r *repository) GetByID(id uint64) (*entities.Episode, error) {
 
 	return episode, nil
 }
+
 func (r *repository) GetBySlug(slug string) (*entities.EpisodeWithSeasonSlug, error) {
 	episode := &entities.EpisodeWithSeasonSlug{}
 
@@ -113,6 +115,7 @@ func (r *repository) GetBySlug(slug string) (*entities.EpisodeWithSeasonSlug, er
 
 	return episode, nil
 }
+
 func (r *repository) Create(episode *entities.Episode) error {
 	err := r.db.QueryRow(queryCreate, episode.Name, episode.Number,
 		episode.Duration, episode.Url, episode.Slug, episode.SeasonId).Scan(&episode.ID)
@@ -128,11 +131,11 @@ func (r *repository) Create(episode *entities.Episode) error {
 			case "23502": // no nulos
 				return &ex.ErrValidation{
 					Field:  pgErr.Column,
-					Reason: "no puede estar vacío",
+					Reason: "the field cannot be empty",
 				}
 			default:
-				log.Printf("Error de restricción en la actualización: %s", err)
-				return fmt.Errorf("error en la creación: %w", err)
+				log.Printf("Failed creation: %s", err)
+				return fmt.Errorf("failed creation: %w", err)
 			}
 		}
 
@@ -158,15 +161,15 @@ func (r *repository) Update(episode *entities.Episode) error {
 			case "23502": // no nulos
 				return &ex.ErrValidation{
 					Field:  pgErr.Column,
-					Reason: "no puede estar vacío",
+					Reason: "the field cannot be empty",
 				}
 			default:
-				log.Printf("Error de restricción en la actualización: %s", err)
-				return fmt.Errorf("error en la actualización: %w", err)
+				log.Printf("Update failed: %s", err)
+				return fmt.Errorf("update failed: %w", err)
 			}
 		}
 
-		log.Printf("Error desconocido en la actualización: %s", err)
+		log.Printf("Unknown update error: %s", err)
 		return err
 	}
 

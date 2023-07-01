@@ -20,8 +20,8 @@ type Service interface {
 	GetLatest() ([]*entities.EpisodeWithImage, error)
 	GetByID(id uint64) (*entities.Episode, error)
 	GetBySlug(slug string) (*entities.EpisodeWithSeasonSlug, error)
-	Create(episode *entities.Episode) (*entities.Episode, error)
-	Update(id uint64, episode *entities.Episode) (*entities.Episode, error)
+	Create(episode *entities.Episode) error
+	Update(id uint64, episode *entities.Episode) error
 	Delete(id uint64) error
 }
 

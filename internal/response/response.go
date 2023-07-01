@@ -4,10 +4,32 @@ import (
 	"net/http"
 )
 
+type BaseResponse interface {
+	GetCode() int
+	GetMessage() string
+	GetError() string
+}
+
 type HttpResponse struct {
 	Code    int    `json:"statusCode"`
 	Message string `json:"message"`
 	Err     string `json:"error"`
+}
+
+func (e *HttpResponse) GetCode() int {
+	return e.Code
+}
+
+func (e *HttpResponse) GetMessage() string {
+	return e.Message
+}
+
+func (e *HttpResponse) GetError() string {
+	return e.Err
+}
+
+func (e *HttpResponse) Error() string {
+	return e.Err
 }
 
 // BadRequestResponse representa una respuesta de solicitud incorrecta (400).

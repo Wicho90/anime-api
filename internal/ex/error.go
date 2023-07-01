@@ -9,6 +9,11 @@ var (
 	ErrNotFound = errors.New("not found")
 )
 
+type AlreadyExistError struct {
+	msg   string
+	Field string
+}
+
 type ErrAlreadyExists struct {
 	Field      string
 	Constraint string

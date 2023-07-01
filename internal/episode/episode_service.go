@@ -28,6 +28,7 @@ func (s *service) GetAll() ([]*entities.Episode, error) {
 
 	return episodes, nil
 }
+
 func (s *service) GetLatest() ([]*entities.EpisodeWithImage, error) {
 	episodes, err := s.repository.GetLatest()
 	if err != nil {
@@ -36,14 +37,14 @@ func (s *service) GetLatest() ([]*entities.EpisodeWithImage, error) {
 
 	return episodes, nil
 }
+
 func (s *service) GetByID(id uint64) (*entities.Episode, error) {
 	episode, err := s.repository.GetByID(id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get episode: %w", err)
+		return nil, err
 	}
 
 	return episode, err
-
 }
 
 func (s *service) GetBySlug(slug string) (*entities.EpisodeWithSeasonSlug, error) {
@@ -51,58 +52,53 @@ func (s *service) GetBySlug(slug string) (*entities.EpisodeWithSeasonSlug, error
 	if err != nil {
 		return nil, err
 	}
+
 	return episode, nil
 }
-func (s *service) Create(episode *entities.Episode) (*entities.Episode, error) {
-	/*name := strings.ToLower(createDto.Name)
-	episode := &Episode{
-		Name:          name,
-		EpisodeNumber: createDto.EpisodeNumber,
-		Slug:          strings.ReplaceAll(strings.TrimSpace(name), " ", "-"),
-	}
-	*/
+
+func (s *service) Create(episode *entities.Episode) error {
 	seasonFound, err := s.seasonRepository.GetById(episode.SeasonId)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	episode.Name = strings.TrimSpace(strings.ToLower(episode.Name))
-
 	episode.Slug = seasonFound.Slug + "-" + strconv.Itoa(int(episode.Number))
 
 	err = s.repository.Create(episode)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create episode: %w", err)
+		return fmt.Errorf("failed to create episode: %w", err)
 	}
 
-	return episode, nil
+	return nil
 }
 
-func (s *service) Update(id uint64, episode *entities.Episode) (*entities.Episode, error) {
+func (s *service) Update(id uint64, episode *entities.Episode) error {
 	// TODO hacer transacción
 	_, err := s.repository.GetByID(id)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if _, err := s.seasonRepository.GetById(episode.SeasonId); err != nil {
-		return nil, err
+
+	seasonFound, err := s.seasonRepository.GetById(episode.SeasonId)
+	if err != nil {
+		return err
 	}
 
 	episode.ID = id
 	episode.Name = strings.TrimSpace(strings.ToLower(episode.Name))
-	episode.Slug = strings.ReplaceAll(episode.Name, " ", "-")
+	episode.Slug = seasonFound.Slug + "-" + strconv.Itoa(int(episode.Number))
 
 	err = s.repository.Update(episode)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return episode, nil
+	return nil
 }
 
 func (s *service) Delete(id uint64) error {
-	err := s.repository.Delete(id)
-	if err != nil {
+	if err := s.repository.Delete(id); err != nil {
 		return err
 	}
 
